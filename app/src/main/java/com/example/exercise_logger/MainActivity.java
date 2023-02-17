@@ -25,10 +25,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private SensorManager sensorManager;
     private Sensor accelerometer;
-    private boolean captureSensorData = false;
+    private Sensor gyroscope;
+    private boolean captureAccelData = false;
+    private boolean captureGyroData = false;
 
     private float[][] accelerometerData = new float[3][];
-    private int numSamples = 0;
+    private float[][] gyroscopeData = new float[3][];
+    private int accelNumSamples = 0;
+    private int gyrolNumSamples = 0;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,9 +50,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (sensorManager != null) {
 
             accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+            gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
             accelerometerData[0] = new float[300]; // x-axis
             accelerometerData[1] = new float[300]; // y-axis
             accelerometerData[2] = new float[300]; // z-axis
+            gyroscopeData[0] = new float[300]; // x-axis-
+            gyroscopeData[1] = new float[300]; // y-axis
+            gyroscopeData[2] = new float[300]; // z-axis
 
         }
         else {
@@ -58,13 +67,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onClick(View v) {
 
-                captureSensorData = true;
+                captureAccelData = true;
+                captureGyroData = true;
 
                 onResume();
 
-
-//                startButton.setEnabled(false);
-//                cancelButton.setEnabled(true);
                 startButton.setVisibility(View.GONE);
                 cancelButton.setVisibility(View.VISIBLE);
                 countDownTimer = new CountDownTimer(30900, 1000) {
@@ -78,7 +85,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         timerTextView.setText("Done!");
                         cancelButton.setText("Reset");
 
-                        captureSensorData = false;
+                        captureAccelData = false;
+                        captureGyroData = false;
                         onPause();
                     }
 
@@ -94,8 +102,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 
                 countDownTimer.cancel();
-//                startButton.setEnabled(true);
-//                cancelButton.setEnabled(false);
                 startButton.setVisibility(View.VISIBLE);
                 cancelButton.setVisibility(View.GONE);
 
@@ -107,19 +113,27 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        if (captureSensorData && sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            accelerometerData[0][numSamples] = sensorEvent.values[0]; // x-axis
-            accelerometerData[1][numSamples] = sensorEvent.values[1]; // y-axis
-            accelerometerData[2][numSamples] = sensorEvent.values[2]; // z-axis
-            numSamples++;
+        if (captureAccelData && sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            accelerometerData[0][accelNumSamples] = sensorEvent.values[0]; // x-axis
+            accelerometerData[1][accelNumSamples] = sensorEvent.values[1]; // y-axis
+            accelerometerData[2][accelNumSamples] = sensorEvent.values[2]; // z-axis
+            accelNumSamples++;
 
-            if (numSamples >= 300) {
-                captureSensorData = false;
+            if (accelNumSamples >= 300) {
+                captureAccelData = false;
             }
 
-//            System.out.println("A_X: " + sensorEvent.values[0]);
-//            System.out.println("A_Y: " + sensorEvent.values[1]);
-//            System.out.println("A_Z: " + sensorEvent.values[2]);
+        }
+        if (captureGyroData && sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+            gyroscopeData[0][gyrolNumSamples] = sensorEvent.values[0]; // x-axis
+            gyroscopeData[1][gyrolNumSamples] = sensorEvent.values[1]; // y-axis
+            gyroscopeData[2][gyrolNumSamples] = sensorEvent.values[2]; // z-axis
+            gyrolNumSamples++;
+
+            if (gyrolNumSamples >= 300) {
+                captureGyroData = false;
+            }
+
         }
 
     }
@@ -134,6 +148,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onResume();
         System.out.println("This was called");
         sensorManager.registerListener(this, accelerometer, 100000);
+        sensorManager.registerListener(this, gyroscope, 100000);
     }
 
     @Override
@@ -143,8 +158,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         System.out.println(Arrays.toString(accelerometerData[0]));
         System.out.println(Arrays.toString(accelerometerData[1]));
         System.out.println(Arrays.toString(accelerometerData[2]));
-        System.out.println(accelerometerData[0][299]);
-        System.out.println(accelerometerData[1][299]);
-        System.out.println(accelerometerData[2][299]);
+        System.out.println(Arrays.toString(gyroscopeData[0]));
+        System.out.println(Arrays.toString(gyroscopeData[1]));
+        System.out.println(Arrays.toString(gyroscopeData[2]));
+
     }
 }
