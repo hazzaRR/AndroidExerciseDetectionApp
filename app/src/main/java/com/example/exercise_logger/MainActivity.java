@@ -13,6 +13,8 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView timerTextView;
     private Button startButton;
+
+    private Button cancelButton;
     private CountDownTimer countDownTimer;
 
     @Override
@@ -22,10 +24,15 @@ public class MainActivity extends AppCompatActivity {
 
         timerTextView = findViewById(R.id.timerTextView);
         startButton = findViewById(R.id.startButton);
+        cancelButton = findViewById(R.id.cancel_Button);
 
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+//                startButton.setEnabled(false);
+//                cancelButton.setEnabled(true);
+                startButton.setVisibility(View.GONE);
+                cancelButton.setVisibility(View.VISIBLE);
                 countDownTimer = new CountDownTimer(30000, 100) {
                     @Override
                     public void onTick(long millisUntilFinished) {
@@ -36,8 +43,25 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onFinish() {
                         timerTextView.setText("Done!");
+                        cancelButton.setText("Reset");
                     }
+
                 }.start();
+            }
+        });
+
+        cancelButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View view) {
+                countDownTimer.cancel();
+//                startButton.setEnabled(true);
+//                cancelButton.setEnabled(false);
+                startButton.setVisibility(View.VISIBLE);
+                cancelButton.setVisibility(View.GONE);
+
+                timerTextView.setText("30 seconds");
+
             }
         });
     }
