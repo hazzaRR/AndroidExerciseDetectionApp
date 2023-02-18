@@ -13,6 +13,16 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
@@ -29,10 +39,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private boolean captureAccelData = false;
     private boolean captureGyroData = false;
 
-    private float[][] accelerometerData = new float[3][];
-    private float[][] gyroscopeData = new float[3][];
+    private float[][] sensorData = new float[6][];
     private int accelNumSamples = 0;
-    private int gyrolNumSamples = 0;
+    private int gyroNumSamples = 0;
+
+    private RequestQueue requestQueue;
 
 
     @Override
@@ -51,12 +62,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
             gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-            accelerometerData[0] = new float[300]; // x-axis
-            accelerometerData[1] = new float[300]; // y-axis
-            accelerometerData[2] = new float[300]; // z-axis
-            gyroscopeData[0] = new float[300]; // x-axis-
-            gyroscopeData[1] = new float[300]; // y-axis
-            gyroscopeData[2] = new float[300]; // z-axis
+            sensorData[0] = new float[300]; // Accel x-axis
+            sensorData[1] = new float[300]; // Accel y-axis
+            sensorData[2] = new float[300]; // Accel z-axis
+            sensorData[3] = new float[300]; // Gyro x-axis
+            sensorData[4] = new float[300]; // Gyro y-axis
+            sensorData[5] = new float[300]; // Gyro z-axis
 
         }
         else {
@@ -88,6 +99,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         captureAccelData = false;
                         captureGyroData = false;
                         onPause();
+
+//                        sendPostRequest("url", sensorData);
+
                     }
 
                 }.start();
@@ -114,9 +128,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         if (captureAccelData && sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            accelerometerData[0][accelNumSamples] = sensorEvent.values[0]; // x-axis
-            accelerometerData[1][accelNumSamples] = sensorEvent.values[1]; // y-axis
-            accelerometerData[2][accelNumSamples] = sensorEvent.values[2]; // z-axis
+            sensorData[0][accelNumSamples] = sensorEvent.values[0]; // Accel x-axis
+            sensorData[1][accelNumSamples] = sensorEvent.values[1]; // Accel y-axis
+            sensorData[2][accelNumSamples] = sensorEvent.values[2]; // Accel z-axis
             accelNumSamples++;
 
             if (accelNumSamples >= 300) {
@@ -125,12 +139,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         }
         if (captureGyroData && sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-            gyroscopeData[0][gyrolNumSamples] = sensorEvent.values[0]; // x-axis
-            gyroscopeData[1][gyrolNumSamples] = sensorEvent.values[1]; // y-axis
-            gyroscopeData[2][gyrolNumSamples] = sensorEvent.values[2]; // z-axis
-            gyrolNumSamples++;
+            sensorData[3][gyroNumSamples] = sensorEvent.values[0]; // Gyro x-axis
+            sensorData[4][gyroNumSamples] = sensorEvent.values[1]; // Gyro y-axis
+            sensorData[5][gyroNumSamples] = sensorEvent.values[2]; // Gyro z-axis
+            gyroNumSamples++;
 
-            if (gyrolNumSamples >= 300) {
+            if (gyroNumSamples >= 300) {
                 captureGyroData = false;
             }
 
@@ -146,7 +160,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     protected void onResume() {
         super.onResume();
-        System.out.println("This was called");
+
         sensorManager.registerListener(this, accelerometer, 100000);
         sensorManager.registerListener(this, gyroscope, 100000);
     }
@@ -155,12 +169,46 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onPause() {
         super.onPause();
         sensorManager.unregisterListener(this);
-        System.out.println(Arrays.toString(accelerometerData[0]));
-        System.out.println(Arrays.toString(accelerometerData[1]));
-        System.out.println(Arrays.toString(accelerometerData[2]));
-        System.out.println(Arrays.toString(gyroscopeData[0]));
-        System.out.println(Arrays.toString(gyroscopeData[1]));
-        System.out.println(Arrays.toString(gyroscopeData[2]));
+        System.out.println(Arrays.toString(sensorData[0]));
+        System.out.println(Arrays.toString(sensorData[1]));
+        System.out.println(Arrays.toString(sensorData[2]));
+        System.out.println(Arrays.toString(sensorData[3]));
+        System.out.println(Arrays.toString(sensorData[4]));
+        System.out.println(Arrays.toString(sensorData[5]));
 
+    }
+
+
+    private void sendPostRequest(String postUrl, float[][] data) {
+
+        requestQueue = Volley.newRequestQueue(this);
+
+
+        // Create the JSON object to send in the request body
+        JSONObject jsonBody = new JSONObject();
+        try {
+            jsonBody.put("data", data);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        // Request a JSON object response from the provided URL.
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, postUrl, jsonBody,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        // Handle the response
+                        System.out.println(response);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                // Handle the error
+                System.out.println(error);
+            }
+        });
+
+        // Add the request to the RequestQueue.
+        requestQueue.add(jsonObjectRequest);
     }
 }
