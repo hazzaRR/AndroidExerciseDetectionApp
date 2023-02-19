@@ -2,12 +2,14 @@ package com.example.exercise_logger;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Vibrator;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -33,6 +35,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Button cancelButton;
     private CountDownTimer countDownTimer;
 
+    private TextView exerciseTextView;
+
     private SensorManager sensorManager;
     private Sensor accelerometer;
     private Sensor gyroscope;
@@ -55,11 +59,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         startButton = findViewById(R.id.startButton);
         cancelButton = findViewById(R.id.cancel_Button);
 
+        exerciseTextView = findViewById(R.id.exercise_prediction);
+
+
 
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
         if (sensorManager != null) {
 
+            //create arrays for each axis of sensors to record 30 seconds of data
             accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
             gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
             sensorData[0] = new float[300]; // Accel x-axis
@@ -78,6 +87,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onClick(View v) {
 
+                vibrator.vibrate(400);
+
                 captureAccelData = true;
                 captureGyroData = true;
 
@@ -88,6 +99,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                 startButton.setVisibility(View.GONE);
                 cancelButton.setVisibility(View.VISIBLE);
+
+                //create a 30 seconds timer that is displayed to the phone screen
                 countDownTimer = new CountDownTimer(30900, 1000) {
                     @Override
                     public void onTick(long millisUntilFinished) {
@@ -96,6 +109,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                     @Override
                     public void onFinish() {
+                        //once the timer has finished, send a post request to send the data to the api
                         timerTextView.setText("Done!");
                         cancelButton.setText("Reset");
 
@@ -103,7 +117,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         captureGyroData = false;
                         onPause();
 
+                        vibrator.vibrate(800);
+
                         sendPostRequest("http://192.168.0.33:5000/predict", sensorData);
+
 
                     }
 
@@ -121,6 +138,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 countDownTimer.cancel();
                 startButton.setVisibility(View.VISIBLE);
                 cancelButton.setVisibility(View.GONE);
+                exerciseTextView.setVisibility(View.GONE);
 
                 timerTextView.setText("30 seconds");
 
@@ -186,6 +204,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         requestQueue = Volley.newRequestQueue(this);
 
+        //create a 2d jsonarray of the sensor data captured to send to the api
+
         JSONArray jsonDataArray;
 
         try {
@@ -206,20 +226,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
 
 
-//        // Create the JSON object to send in the request body
-//        JSONObject jsonBody = new JSONObject();
-//        try {
-//            jsonBody.put("data", data[0]);
-//        } catch (JSONException e) {
-//            e.printStackTrace();
-//        }
-
-        // Request a JSON object response from the provided URL.
+        // Send a Post request to the api
         JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.POST, postUrl, jsonDataArray,
                 new Response.Listener<JSONArray>() {
                     @Override
                     public void onResponse(JSONArray response) {
                         System.out.println(response);
+                        exerciseTextView.setText(response.toString());
+                        exerciseTextView.setVisibility(View.VISIBLE);
                     }
 
                 }, new Response.ErrorListener() {
@@ -231,7 +245,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     }
         });
 
-        // Add the request to the RequestQueue.
         requestQueue.add(jsonArrayRequest);
     }
 }
