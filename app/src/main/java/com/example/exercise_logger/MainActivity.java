@@ -17,11 +17,11 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.Arrays;
 
@@ -40,8 +40,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private boolean captureGyroData = false;
 
     private float[][] sensorData = new float[6][];
-    private int accelNumSamples = 0;
-    private int gyroNumSamples = 0;
+    private int accelNumSamples;
+    private int gyroNumSamples;
 
     private RequestQueue requestQueue;
 
@@ -81,6 +81,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 captureAccelData = true;
                 captureGyroData = true;
 
+                accelNumSamples = 0;
+                gyroNumSamples = 0;
+
                 onResume();
 
                 startButton.setVisibility(View.GONE);
@@ -100,7 +103,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         captureGyroData = false;
                         onPause();
 
-//                        sendPostRequest("url", sensorData);
+                        sendPostRequest("http://192.168.0.33:5000/predict", sensorData);
 
                     }
 
@@ -183,32 +186,52 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         requestQueue = Volley.newRequestQueue(this);
 
+        JSONArray jsonDataArray;
 
-        // Create the JSON object to send in the request body
-        JSONObject jsonBody = new JSONObject();
         try {
-            jsonBody.put("data", data);
+
+            jsonDataArray = new JSONArray();
+
+            jsonDataArray.put(new JSONArray(data[0]));
+            jsonDataArray.put(new JSONArray(data[1]));
+            jsonDataArray.put(new JSONArray(data[2]));
+            jsonDataArray.put(new JSONArray(data[3]));
+            jsonDataArray.put(new JSONArray(data[4]));
+            jsonDataArray.put(new JSONArray(data[5]));
+
+
+
         } catch (JSONException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
 
+
+//        // Create the JSON object to send in the request body
+//        JSONObject jsonBody = new JSONObject();
+//        try {
+//            jsonBody.put("data", data[0]);
+//        } catch (JSONException e) {
+//            e.printStackTrace();
+//        }
+
         // Request a JSON object response from the provided URL.
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, postUrl, jsonBody,
-                new Response.Listener<JSONObject>() {
+        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.POST, postUrl, jsonDataArray,
+                new Response.Listener<JSONArray>() {
                     @Override
-                    public void onResponse(JSONObject response) {
-                        // Handle the response
+                    public void onResponse(JSONArray response) {
                         System.out.println(response);
                     }
+
                 }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                // Handle the error
-                System.out.println(error);
-            }
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // Handle the error
+                        System.out.println(error);
+
+                    }
         });
 
         // Add the request to the RequestQueue.
-        requestQueue.add(jsonObjectRequest);
+        requestQueue.add(jsonArrayRequest);
     }
 }
