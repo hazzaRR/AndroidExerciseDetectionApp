@@ -71,12 +71,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             //create arrays for each axis of sensors to record 30 seconds of data
             accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
             gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-            sensorData[0] = new float[300]; // Accel x-axis
-            sensorData[1] = new float[300]; // Accel y-axis
-            sensorData[2] = new float[300]; // Accel z-axis
-            sensorData[3] = new float[300]; // Gyro x-axis
-            sensorData[4] = new float[300]; // Gyro y-axis
-            sensorData[5] = new float[300]; // Gyro z-axis
+            sensorData[0] = new float[150]; // Accel x-axis
+            sensorData[1] = new float[150]; // Accel y-axis
+            sensorData[2] = new float[150]; // Accel z-axis
+            sensorData[3] = new float[150]; // Gyro x-axis
+            sensorData[4] = new float[150]; // Gyro y-axis
+            sensorData[5] = new float[150]; // Gyro z-axis
 
         }
         else {
@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 cancelButton.setVisibility(View.VISIBLE);
 
                 //create a 30 seconds timer that is displayed to the phone screen
-                countDownTimer = new CountDownTimer(30900, 1000) {
+                countDownTimer = new CountDownTimer(15900, 1000) {
                     @Override
                     public void onTick(long millisUntilFinished) {
                         timerTextView.setText("" + millisUntilFinished / 1000 + " seconds");
@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                         vibrator.vibrate(800);
 
-                        sendPostRequest("http://192.168.0.33:5000/predict", sensorData);
+                        sendPostRequest("http://192.168.0.17:5000/predict", sensorData);
 
 
                     }
@@ -140,7 +140,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 cancelButton.setVisibility(View.GONE);
                 exerciseTextView.setVisibility(View.GONE);
 
-                timerTextView.setText("30 seconds");
+                timerTextView.setText("15 seconds");
 
             }
         });
@@ -154,7 +154,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             sensorData[2][accelNumSamples] = sensorEvent.values[2]; // Accel z-axis
             accelNumSamples++;
 
-            if (accelNumSamples >= 300) {
+            if (accelNumSamples >= 150) {
                 captureAccelData = false;
             }
 
@@ -165,7 +165,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             sensorData[5][gyroNumSamples] = sensorEvent.values[2]; // Gyro z-axis
             gyroNumSamples++;
 
-            if (gyroNumSamples >= 300) {
+            if (gyroNumSamples >= 150) {
                 captureGyroData = false;
             }
 
@@ -232,7 +232,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     @Override
                     public void onResponse(JSONArray response) {
                         System.out.println(response);
-                        exerciseTextView.setText(response.toString());
+                        try {
+
+                            String result = (String) response.get(0);
+                            exerciseTextView.setText(result);
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
+                        }
                         exerciseTextView.setVisibility(View.VISIBLE);
                     }
 
