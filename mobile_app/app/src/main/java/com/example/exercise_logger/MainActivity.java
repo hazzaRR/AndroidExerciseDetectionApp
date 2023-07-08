@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                         vibrator.vibrate(800);
 
-                        sendPostRequest("http://192.168.0.17:5000/predict", sensorData);
+                        sendPostRequest("http://10.113.228.4:5000/predict", sensorData);
 
 
                     }
