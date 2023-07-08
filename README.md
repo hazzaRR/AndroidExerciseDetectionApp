@@ -2,10 +2,19 @@
 To use the prototype Android app, please follow the instructions below:
 
 ## Prerequisites
-- Ensure that you have activated the Conda environment by running the following command:
+
+Before attempting to run any Python code, set up a Conda environment using the `environment.yml` file provided.
+
+To do this open a terminal in the server directory of this project and run the he following command to create a new Conda environment:
+```
+conda env create --file environment.yml
+```
+
+Next activate the Conda environment using the command:
 
 ```
 conda activate gym_classification
+
 ```
 - Make sure you have set up the Flask server by running the following command in the root of the server directory:
 
