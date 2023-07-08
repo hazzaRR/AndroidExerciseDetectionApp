@@ -1,4 +1,4 @@
-## Prototype Android App 
+## Prototype Exercise Detection Android App 
 To use the prototype Android app, please follow the instructions below:
 
 ## Prerequisites
